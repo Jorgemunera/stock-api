@@ -1,0 +1,40 @@
+# Go related
+*.exe
+*.out
+*.test
+*.log
+*.mod
+*.sum
+/vendor/
+bin/
+pkg/
+
+# Environment variables
+.env
+.env.local
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+log/
+
+# Compiled files
+*.o
+*.a
+*.so
+*.dll
+
+# Docker
+docker-compose.override.yml
+docker-data/
+cockroach-data/
