@@ -143,6 +143,15 @@ docker-compose up -d
 go run main.go
 ```
 
+## Unit Test
+
+### 1. Ejecutar los unit test para services
+```bash
+go test ./services/...
+```
+
+
+
 La API estará disponible en: `http://localhost:3000`
 
 ## Tecnologías Utilizadas
