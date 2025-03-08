@@ -1,53 +1,44 @@
 # Stock API - Backend
 
-## 📌 Descripción del Proyecto
+## Descripción del Proyecto
 
 Este proyecto es una **API RESTful** desarrollada en **Golang**, que permite consultar información de acciones financieras, almacenarlas en **CockroachDB**, y recomendar las mejores acciones para invertir con base en un algoritmo de análisis.
 
 El sistema obtiene los datos desde una API externa, los almacena en la base de datos y expone endpoints para acceder a esta información. Además, proporciona una funcionalidad de recomendación basada en la evaluación de cambios en la calificación de las acciones y en la variación de sus precios objetivo.
 
----
-
-## 🏗️ Arquitectura del Proyecto
+## Arquitectura del Proyecto
 
 El proyecto sigue una **arquitectura en capas**, dividiendo la responsabilidad en módulos separados:
 
-1. **Base de Datos (**``**)**:
-
+1. **Base de Datos**
    - Conexión con CockroachDB
    - Creación de la base de datos y la tabla `stocks`
    - Inserción de datos obtenidos desde la API externa
 
-2. **Modelos (**``**)**:
-
+2. **Modelos**
    - Define las estructuras de datos (`Stock`, `StockScore`, `APIResponse`)
 
-3. **Servicios (**``**)**:
-
+3. **Servicios**
    - Contiene la lógica de negocio, incluyendo la puntuación y recomendación de acciones
 
-4. **Rutas (**``**)**:
-
+4. **Rutas**
    - Define los endpoints de la API y maneja las solicitudes HTTP
 
-5. **Main (**``**)**:
-
+5. **Main**
    - Punto de entrada del sistema
    - Inicializa la base de datos, servicios y API
 
 Esta arquitectura facilita la escalabilidad y mantenimiento del código.
 
----
+## Lógica del Algoritmo de Recomendación
 
-## 🔢 Lógica del Algoritmo de Recomendación
-
-### 📊 **¿Qué evalúa el algoritmo?**
+### ¿Qué evalúa el algoritmo?
 
 Nuestra API selecciona las mejores acciones basándose en tres criterios principales:
 
 1. **Cambio en la Calificación de la Acción**  
    - Se consideran cambios en la calificación (`Sell`, `Neutral`, `Buy`, `Overweight`, `Underweight`).
-   - Se asigna una puntuación según la magnitud del cambio, por ejemplo:
+   - Se asigna una puntuación según la magnitud del cambio:
      - `Sell → Buy` recibe la mayor puntuación.
      - `Buy → Sell` es penalizado con una puntuación negativa.
 
@@ -60,7 +51,7 @@ Nuestra API selecciona las mejores acciones basándose en tres criterios princip
    - Un aumento en el `target_to` respecto a `target_from` otorga puntuación positiva.
    - Se utiliza un factor de ajuste proporcional en lugar de valores absolutos.
 
-### 📈 **Fórmula de Puntuación**
+### Fórmula de Puntuación
 
 Cada acción recibe un puntaje basado en la siguiente fórmula:
 
@@ -76,17 +67,17 @@ Donde:
 
 Las acciones con mayor puntuación se consideran mejores recomendaciones y se ordenan de mayor a menor en la respuesta de la API.
 
----
+## Endpoints de la API
 
-## 🚀 Endpoints de la API
+### 1. Obtener todas las acciones
 
-### 📌 **1. Obtener todas las acciones**
+**Endpoint:** `/stocks`
 
-``
+**Método:** GET
 
-📌 **Descripción:** Devuelve todas las acciones almacenadas en la base de datos.
+**Descripción:** Devuelve todas las acciones almacenadas en la base de datos.
 
-📌 **Ejemplo de Respuesta:**
+**Ejemplo de Respuesta:**
 
 ```json
 [
@@ -99,19 +90,19 @@ Las acciones con mayor puntuación se consideran mejores recomendaciones y se or
         "rating_to": "Equal Weight",
         "target_from": "$507.00",
         "target_to": "$542.00"
-    }...
+    }
 ]
 ```
 
----
+### 2. Obtener las mejores recomendaciones
 
-### 📌 **2. Obtener las mejores recomendaciones**
+**Endpoint:** `/recommendations`
 
-``
+**Método:** GET
 
-📌 **Descripción:** Devuelve las **5 mejores acciones** para invertir según el algoritmo.
+**Descripción:** Devuelve las **5 mejores acciones** para invertir según el algoritmo.
 
-📌 **Ejemplo de Respuesta:**
+**Ejemplo de Respuesta:**
 
 ```json
 [
@@ -127,42 +118,37 @@ Las acciones con mayor puntuación se consideran mejores recomendaciones y se or
             "target_to": "$4.70"
         },
         "Score": 3.59
-    }...
+    }
 ]
 ```
 
----
+## Instalación y Ejecución
 
-## 🛠️ Instalación y Ejecución
-
-### 📌 **1️⃣ Clonar el repositorio**
+### 1. Clonar el repositorio
 
 ```bash
 git clone <repo_url>
 cd stock-api
 ```
 
-### 📌 **2️⃣ Ejecutar CockroachDB con Docker**
+### 2. Ejecutar CockroachDB con Docker
 
 ```bash
 docker-compose up -d
 ```
 
-### 📌 **3️⃣ Ejecutar el servidor**
+### 3. Ejecutar el servidor
 
 ```bash
 go run main.go
 ```
 
-La API estará disponible en: `http://localhost:3000` 🚀
+La API estará disponible en: `http://localhost:3000`
 
----
-
-## 📌 Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 - **Golang**
 - **CockroachDB**
 - **Docker**
 - **RESTful API**
-
 
