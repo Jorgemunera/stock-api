@@ -43,34 +43,38 @@ Esta arquitectura facilita la escalabilidad y mantenimiento del código.
 
 ### 📊 **¿Qué evalúa el algoritmo?**
 
-En el mercado de acciones, los inversionistas analizan varios factores antes de decidir dónde invertir. Nuestra API evalúa dos criterios principales:
+Nuestra API selecciona las mejores acciones basándose en tres criterios principales:
 
-1. **Cambio en la Calificación de la Acción**
+1. **Cambio en la Calificación de la Acción**  
+   - Se consideran cambios en la calificación (`Sell`, `Neutral`, `Buy`, `Overweight`, `Underweight`).
+   - Se asigna una puntuación según la magnitud del cambio, por ejemplo:
+     - `Sell → Buy` recibe la mayor puntuación.
+     - `Buy → Sell` es penalizado con una puntuación negativa.
 
-   - Las acciones son calificadas por firmas de inversión con términos como `Buy`, `Neutral`, `Sell`, `Underweight`, `Overweight`.
-   - Un cambio de `Sell` → `Buy` indica una mejora fuerte y recibe mayor puntuación.
-   - Un cambio de `Neutral` → `Buy` es positivo, pero con menos impacto.
-   - Una degradación (`Buy` → `Sell`) es penalizada con puntuaciones negativas.
+2. **Acción del Bróker**  
+   - Se evalúan acciones como `upgraded`, `downgraded`, `target raised` o `target lowered`.
+   - Acciones positivas suman puntuación, mientras que degradaciones restan.
 
-2. **Cambio en el Target Price (Precio Objetivo)**
-
-   - Indica la expectativa de crecimiento de la acción.
-   - Si una acción tiene un `target_to` mayor que `target_from`, se considera positiva.
-   - Se calcula el **porcentaje de crecimiento** en lugar de un valor absoluto, para evaluar proporcionalmente.
+3. **Cambio en el Precio Objetivo (Target Price)**  
+   - Se calcula el porcentaje de cambio en el precio objetivo.
+   - Un aumento en el `target_to` respecto a `target_from` otorga puntuación positiva.
+   - Se utiliza un factor de ajuste proporcional en lugar de valores absolutos.
 
 ### 📈 **Fórmula de Puntuación**
 
-Cada acción recibe un puntaje calculado con la fórmula:
+Cada acción recibe un puntaje basado en la siguiente fórmula:
 
-\(\text{score} = (0.5 \times \text{growthScore}) + (0.3 \times \text{ratingScore}) + (0.2 \times \text{actionScore})\)
+\[
+\text{score} = (0.4 \times \text{ratingChangeScore}) + (0.3 \times \text{actionScore}) + (0.3 \times \text{targetPriceScore})
+\]
 
 Donde:
 
-- `growthScore` → Evaluación del crecimiento del target price basado en el porcentaje.
-- `ratingScore` → Evaluación del cambio de calificación.
-- `actionScore` → Evaluación de la acción realizada por el bróker (upgrade, downgrade, etc.).
+- `ratingChangeScore`: Evalúa el impacto del cambio en la calificación.
+- `actionScore`: Evalúa la acción tomada por el bróker.
+- `targetPriceScore`: Evalúa el cambio en el precio objetivo basado en porcentaje.
 
-Esto permite que las acciones con mejoras en su calificación y crecimiento en precio objetivo sean recomendadas primero.
+Las acciones con mayor puntuación se consideran mejores recomendaciones y se ordenan de mayor a menor en la respuesta de la API.
 
 ---
 
@@ -95,7 +99,7 @@ Esto permite que las acciones con mejoras en su calificación y crecimiento en p
         "rating_to": "Equal Weight",
         "target_from": "$507.00",
         "target_to": "$542.00"
-    }
+    }...
 ]
 ```
 
@@ -122,8 +126,8 @@ Esto permite que las acciones con mejoras en su calificación y crecimiento en p
             "target_from": "$4.20",
             "target_to": "$4.70"
         },
-        "Score": 1.59
-    }
+        "Score": 3.59
+    }...
 ]
 ```
 
