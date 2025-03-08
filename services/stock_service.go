@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"sort"
 	"stock-api/models"
 	"strconv"
 	"strings"
@@ -51,70 +52,70 @@ func (s *StockService) GetRecommendations() ([]models.StockScore, error) {
 		scoredStocks = append(scoredStocks, models.StockScore{Stock: stock, Score: score})
 	}
 
-	sortStocksByScore(scoredStocks)
+	// Ordenar de mayor a menor por Score
+	sort.Slice(scoredStocks, func(i, j int) bool {
+		return scoredStocks[i].Score > scoredStocks[j].Score
+	})
 
+	// Devolver solo las 5 mejores recomendaciones
 	if len(scoredStocks) > 5 {
 		return scoredStocks[:5], nil
 	}
 	return scoredStocks, nil
 }
 
-// calculateStockScore calcula la puntuación de una acción
+// calculateStockScore calcula la puntuación de una acción con los nuevos pesos
 func calculateStockScore(stock models.Stock) float64 {
-	ratingChangeScore := calculateRatingChangeScore(stock)
-	growthScore := calculateGrowthScore(stock)
-	actionScore := calculateActionScore(stock)
+	ratingChangeScore := calculateRatingChangeScore(stock) * 0.4
+	actionScore := calculateActionScore(stock) * 0.3
+	targetPriceScore := calculateTargetPriceChangeScore(stock) * 0.3
 
-	// Ponderación de los factores
-	return (0.5 * growthScore) + (0.3 * ratingChangeScore) + (0.2 * actionScore)
-}
-
-// calculateGrowthScore calcula el potencial de crecimiento basado en el target price
-func calculateGrowthScore(stock models.Stock) float64 {
-	targetFrom, _ := strconv.ParseFloat(strings.TrimPrefix(stock.TargetFrom, "$"), 64)
-	targetTo, _ := strconv.ParseFloat(strings.TrimPrefix(stock.TargetTo, "$"), 64)
-	if targetFrom == 0 {
-		return 0.0
-	}
-	return ((targetTo - targetFrom) / targetFrom) * 10
+	return ratingChangeScore + actionScore + targetPriceScore
 }
 
 // calculateRatingChangeScore evalúa el cambio de rating
 func calculateRatingChangeScore(stock models.Stock) float64 {
 	ratingChanges := map[string]float64{
-		"SellNeutral": 2, "NeutralBuy": 4, "SellBuy": 6,
-		"BuyNeutral": -4, "NeutralSell": -2, "BuySell": -6,
-		"BuyBuy": 1, "NeutralNeutral": 0, "SellSell": -1,
+		"SellBuy": 10, "SellOverweight": 8, "SellNeutral": 5,
+		"NeutralBuy": 5, "NeutralOverweight": 4, "Equal WeightOverweight": 4,
+		"Market PerformBuy": 5, "In-LineOverweight": 4, "UnderweightOverweight": 9,
+		"UnderweightNeutral": 4, "BuyNeutral": -5, "OverweightNeutral": -4,
+		"BuySell": -10, "OverweightSell": -8, "NeutralSell": -5,
+		"UnderweightSell": -7, "OverweightUnderweight": -9, "BuyOverweight": 3,
+		"NeutralNeutral": 0, "BuyBuy": 3,
 	}
+
 	key := stock.RatingFrom + stock.RatingTo
-	return ratingChanges[key]
+	if score, exists := ratingChanges[key]; exists {
+		return score
+	}
+	return 0
 }
 
 // calculateActionScore evalúa el tipo de acción tomada
 func calculateActionScore(stock models.Stock) float64 {
-	switch stock.Action {
-	case "upgraded by":
-		return 2.0
-	case "target raised by":
-		return 1.5
-	case "reiterated by":
-		return 0.5
-	case "target lowered by":
-		return -1.5
-	case "downgraded by":
-		return -2.0
-	default:
-		return 0.0
+	actionScores := map[string]float64{
+		"upgraded by":       4,
+		"downgraded by":     -4,
+		"target raised by":  3,
+		"target lowered by": -3,
+		"reiterated by":     1,
 	}
+
+	if score, exists := actionScores[stock.Action]; exists {
+		return score
+	}
+	return 0
 }
 
-// sortStocksByScore ordena las acciones por puntuación (de mayor a menor)
-func sortStocksByScore(stocks []models.StockScore) {
-	for i := 0; i < len(stocks); i++ {
-		for j := i + 1; j < len(stocks); j++ {
-			if stocks[i].Score < stocks[j].Score {
-				stocks[i], stocks[j] = stocks[j], stocks[i]
-			}
-		}
+// calculateTargetPriceChangeScore evalúa el impacto del cambio de target price
+func calculateTargetPriceChangeScore(stock models.Stock) float64 {
+	targetFrom, err1 := strconv.ParseFloat(strings.TrimPrefix(stock.TargetFrom, "$"), 64)
+	targetTo, err2 := strconv.ParseFloat(strings.TrimPrefix(stock.TargetTo, "$"), 64)
+	if err1 != nil || err2 != nil || targetFrom == 0 {
+		return 0
 	}
+
+	percentageChange := ((targetTo - targetFrom) / targetFrom) * 10
+	return percentageChange
 }

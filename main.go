@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"stock-api/database"
+	"stock-api/middlewares"
 	api "stock-api/routes"
 	"stock-api/services"
 	"time"
@@ -42,6 +43,13 @@ func main() {
 	// Configurar las rutas de la API
 	api.SetupRoutes(stockService)
 
+	// Aplicar Middleware CORS a TODAS las rutas
+	handler := middlewares.CORSHandler(http.DefaultServeMux)
+
+	// Iniciar el servidor con el middleware
 	fmt.Println("Server is running on http://localhost:3000")
-	http.ListenAndServe(":3000", nil)
+	err = http.ListenAndServe(":3000", handler)
+	if err != nil {
+		fmt.Println("Error starting server:", err)
+	}
 }
